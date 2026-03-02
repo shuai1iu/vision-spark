@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPARK / 特效灵感库</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0f;--surface:#13131a;--surface2:#1c1c28;--border:#2a2a3d;
+    --accent:#c8ff00;--accent2:#ff4d6d;--accent3:#00d4ff;
+    --text:#e8e8f0;--text-muted:#6b6b85;--text-dim:#3a3a52;
+    --radius:4px;
+    --font-display:'Syne',sans-serif;--font-mono:'Space Mono',monospace;--font-body:'Noto Sans SC',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden}
+  .header{position:sticky;top:0;z-index:100;background:rgba(10,10,15,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 32px;height:60px;display:flex;align-items:center;gap:24px}
+  .logo{font-family:var(--font-display);font-weight:800;font-size:18px;letter-spacing:.08em;color:var(--accent);flex-shrink:0}
+  .logo span{color:var(--text-muted);font-weight:400;font-size:12px;letter-spacing:.15em;margin-left:8px}
+  .search-wrap{flex:1;max-width:400px;position:relative}
+  .search-wrap input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);font-size:12px;padding:8px 12px 8px 36px;border-radius:var(--radius);outline:none;transition:border-color .2s}
+  .search-wrap input:focus{border-color:var(--accent)}
+  .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:14px}
+  .header-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .stat-badge{font-family:var(--font-mono);font-size:11px;color:var(--text-muted);border:1px solid var(--border);padding:4px 10px;border-radius:2px}
+  .stat-badge b{color:var(--accent)}
+  .btn-add{background:var(--accent);color:#000;border:none;font-family:var(--font-display);font-weight:800;font-size:12px;letter-spacing:.08em;padding:8px 16px;cursor:pointer;border-radius:var(--radius);transition:transform .15s,box-shadow .15s}
+  .btn-add:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(200,255,0,.3)}
+  .filter-bar{padding:12px 32px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .filter-label{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:.1em;margin-right:4px}
+  .tag-btn{font-family:var(--font-mono);font-size:11px;padding:4px 10px;border:1px solid var(--border);background:transparent;color:var(--text-muted);border-radius:2px;cursor:pointer;transition:all .15s;white-space:nowrap}
+  .tag-btn:hover{border-color:var(--text-muted);color:var(--text)}
+  .tag-btn.active{border-color:var(--accent);background:rgba(200,255,0,.08);color:var(--accent)}
+  .tag-btn.cat-ai.active{border-color:#c8ff00;background:rgba(200,255,0,.08);color:#c8ff00}
+  .tag-btn.cat-body.active{border-color:#ff4d6d;background:rgba(255,77,109,.08);color:#ff4d6d}
+  .tag-btn.cat-fx.active{border-color:#00d4ff;background:rgba(0,212,255,.08);color:#00d4ff}
+  .tag-btn.cat-ar.active{border-color:#b57bff;background:rgba(181,123,255,.08);color:#b57bff}
+  .tag-btn.cat-camera.active{border-color:#ff9f43;background:rgba(255,159,67,.08);color:#ff9f43}
+  .tag-btn.cat-audio.active{border-color:#26de81;background:rgba(38,222,129,.08);color:#26de81}
+  .tag-btn.cat-social.active{border-color:#fd9644;background:rgba(253,150,68,.08);color:#fd9644}
+  .divider{width:1px;height:20px;background:var(--border);margin:0 4px}
+  .diff-filter{display:flex;gap:4px;align-items:center}
+  .diff-dot{width:24px;height:24px;border-radius:50%;border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;font-family:var(--font-mono);color:var(--text-muted);transition:all .15s}
+  .diff-dot[data-d="1"]{--dc:#26de81}.diff-dot[data-d="2"]{--dc:#c8ff00}.diff-dot[data-d="3"]{--dc:#ff9f43}.diff-dot[data-d="4"]{--dc:#ff4d6d}.diff-dot[data-d="5"]{--dc:#b57bff}
+  .diff-dot.active{background:var(--dc);color:#000;border-color:var(--dc)}
+  .main{padding:24px 32px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s;position:relative}
+  .card:hover{transform:translateY(-3px);border-color:rgba(200,255,0,.3);box-shadow:0 12px 40px rgba(0,0,0,.4)}
+  .card-thumb{width:100%;aspect-ratio:16/9;background:var(--surface2);position:relative;overflow:hidden}
+  .card-thumb img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
+  .card:hover .card-thumb img{transform:scale(1.04)}
+  .thumb-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--text-dim);background:linear-gradient(135deg,var(--surface2) 0%,#0f0f1a 100%)}
+  .card-type-badge{position:absolute;top:8px;left:8px;font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;padding:3px 7px;border-radius:2px;text-transform:uppercase}
+  .type-video{background:rgba(255,77,109,.85);color:#fff}.type-link{background:rgba(0,212,255,.85);color:#000}.type-image{background:rgba(200,255,0,.85);color:#000}
+  .diff-badge{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:9px;font-weight:700}
+  .diff-1{background:#26de81;color:#000}.diff-2{background:#c8ff00;color:#000}.diff-3{background:#ff9f43;color:#000}.diff-4{background:#ff4d6d;color:#fff}.diff-5{background:#b57bff;color:#fff}
+  .card-body{padding:12px 14px 10px}
+  .card-title{font-family:var(--font-display);font-weight:600;font-size:14px;line-height:1.4;color:var(--text);margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+  .card-tag{font-family:var(--font-mono);font-size:10px;padding:2px 7px;border-radius:2px;border:1px solid}
+  .card-tag.cat-ai{border-color:rgba(200,255,0,.4);color:#c8ff00}.card-tag.cat-body{border-color:rgba(255,77,109,.4);color:#ff4d6d}
+  .card-tag.cat-fx{border-color:rgba(0,212,255,.4);color:#00d4ff}.card-tag.cat-ar{border-color:rgba(181,123,255,.4);color:#b57bff}
+  .card-tag.cat-camera{border-color:rgba(255,159,67,.4);color:#ff9f43}.card-tag.cat-audio{border-color:rgba(38,222,129,.4);color:#26de81}
+  .card-tag.cat-social{border-color:rgba(253,150,68,.4);color:#fd9644}
+  .card-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:8px;margin-top:4px}
+  .card-source{font-family:var(--font-mono);font-size:10px;color:var(--text-muted)}
+  .vote-btn{display:flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:var(--font-mono);font-size:11px;padding:4px 10px;border-radius:2px;cursor:pointer;transition:all .15s}
+  .vote-btn:hover,.vote-btn.voted{border-color:var(--accent);color:var(--accent);background:rgba(200,255,0,.06)}
+  .has-workflow-badge{position:absolute;bottom:8px;right:8px;font-family:var(--font-mono);font-size:9px;background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.35);color:var(--accent3);padding:2px 7px;border-radius:2px}
+  .empty-state{grid-column:1/-1;text-align:center;padding:80px 20px;color:var(--text-muted)}
+  .empty-state .big{font-size:48px;margin-bottom:16px}
+  .empty-state p{font-family:var(--font-mono);font-size:13px;line-height:1.8}
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;backdrop-filter:blur(6px);align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 16px}
+  .overlay.open{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:6px;width:560px;max-width:95vw;padding:28px;margin:auto}
+  .modal-title{font-family:var(--font-display);font-weight:800;font-size:20px;color:var(--accent);margin-bottom:4px}
+  .modal-sub{font-family:var(--font-mono);font-size:11px;color:var(--text-muted);margin-bottom:24px}
+  .form-group{margin-bottom:18px}
+  .form-label{font-family:var(--font-mono);font-size:11px;color:var(--text-muted);letter-spacing:.08em;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+  .required{color:var(--accent2)}
+  .form-input,.form-textarea{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);font-size:12px;padding:10px 12px;border-radius:var(--radius);outline:none;transition:border-color .2s}
+  .form-input:focus,.form-textarea:focus{border-color:var(--accent)}
+  .form-textarea{resize:vertical;min-height:64px}
+  .type-tabs{display:flex;gap:8px;margin-bottom:14px}
+  .type-tab{flex:1;padding:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);font-family:var(--font-mono);font-size:11px;cursor:pointer;border-radius:var(--radius);transition:all .15s;text-align:center}
+  .type-tab.active{border-color:var(--accent3);background:rgba(0,212,255,.08);color:var(--accent3)}
+  .upload-area{border:2px dashed var(--border);border-radius:var(--radius);padding:32px;text-align:center;cursor:pointer;transition:border-color .2s;display:none}
+  .upload-area:hover{border-color:var(--accent)}
+  .upload-area.active{display:block}
+  .upload-area p{font-family:var(--font-mono);font-size:12px;color:var(--text-muted)}
+  .tag-select-grid{display:flex;flex-wrap:wrap;gap:6px}
+  .tag-select-btn{font-family:var(--font-mono);font-size:11px;padding:4px 10px;border-radius:2px;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;transition:all .15s}
+  .tag-select-btn:hover{border-color:var(--text-muted);color:var(--text)}
+  .tag-select-btn.sel.cat-ai{border-color:#c8ff00;background:rgba(200,255,0,.12);color:#c8ff00}
+  .tag-select-btn.sel.cat-body{border-color:#ff4d6d;background:rgba(255,77,109,.12);color:#ff4d6d}
+  .tag-select-btn.sel.cat-fx{border-color:#00d4ff;background:rgba(0,212,255,.12);color:#00d4ff}
+  .tag-select-btn.sel.cat-ar{border-color:#b57bff;background:rgba(181,123,255,.12);color:#b57bff}
+  .tag-select-btn.sel.cat-camera{border-color:#ff9f43;background:rgba(255,159,67,.12);color:#ff9f43}
+  .tag-select-btn.sel.cat-audio{border-color:#26de81;background:rgba(38,222,129,.12);color:#26de81}
+  .tag-select-btn.sel.cat-social{border-color:#fd9644;background:rgba(253,150,68,.12);color:#fd9644}
+  .diff-select{display:flex;gap:8px}
+  .diff-opt{flex:1;padding:8px 4px;border:1px solid var(--border);background:transparent;cursor:pointer;border-radius:var(--radius);text-align:center;transition:all .15s}
+  .diff-opt .num{font-family:var(--font-mono);font-size:16px;font-weight:700}
+  .diff-opt .lbl{font-family:var(--font-body);font-size:10px;color:var(--text-muted);margin-top:2px}
+  .diff-opt[data-d="1"].sel{border-color:#26de81;background:rgba(38,222,129,.1)}.diff-opt[data-d="1"].sel .num{color:#26de81}
+  .diff-opt[data-d="2"].sel{border-color:#c8ff00;background:rgba(200,255,0,.1)}.diff-opt[data-d="2"].sel .num{color:#c8ff00}
+  .diff-opt[data-d="3"].sel{border-color:#ff9f43;background:rgba(255,159,67,.1)}.diff-opt[data-d="3"].sel .num{color:#ff9f43}
+  .diff-opt[data-d="4"].sel{border-color:#ff4d6d;background:rgba(255,77,109,.1)}.diff-opt[data-d="4"].sel .num{color:#ff4d6d}
+  .diff-opt[data-d="5"].sel{border-color:#b57bff;background:rgba(181,123,255,.1)}.diff-opt[data-d="5"].sel .num{color:#b57bff}
+  .modal-footer{display:flex;gap:10px;margin-top:24px}
+  .btn-cancel{flex:1;padding:10px;background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:var(--font-mono);font-size:12px;cursor:pointer;border-radius:var(--radius);transition:all .15s}
+  .btn-cancel:hover{border-color:var(--text-muted);color:var(--text)}
+  .btn-submit{flex:2;padding:10px;background:var(--accent);border:none;color:#000;font-family:var(--font-display);font-weight:800;font-size:13px;letter-spacing:.05em;cursor:pointer;border-radius:var(--radius);transition:all .15s}
+  .btn-submit:hover{box-shadow:0 4px 20px rgba(200,255,0,.35)}
+  /* DETAIL */
+  .detail-modal{background:var(--surface);border:1px solid var(--border);border-radius:6px;width:960px;max-width:95vw;margin:auto}
+  .detail-preview{width:100%;aspect-ratio:16/9;background:var(--bg);position:relative;overflow:hidden}
+  .detail-preview img{width:100%;height:100%;object-fit:contain}
+  .detail-preview video{width:100%;height:100%;object-fit:contain;background:#000}
+  .detail-body{padding:24px}
+  .detail-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+  .detail-title{font-family:var(--font-display);font-weight:800;font-size:20px;color:var(--text);flex:1;margin-right:16px}
+  .detail-close{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-size:18px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:var(--radius);flex-shrink:0;transition:all .15s}
+  .detail-close:hover{border-color:var(--accent2);color:var(--accent2)}
+  .detail-meta{display:flex;gap:16px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+  .meta-item{font-family:var(--font-mono);font-size:11px;color:var(--text-muted)}
+  .detail-desc{font-size:14px;line-height:1.7;color:var(--text-muted);margin-bottom:16px}
+  .detail-link{font-family:var(--font-mono);font-size:11px;color:var(--accent3);text-decoration:none;word-break:break-all;display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border:1px solid rgba(0,212,255,.3);border-radius:2px;margin-bottom:20px;transition:border-color .15s}
+  .detail-link:hover{border-color:var(--accent3)}
+  .detail-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:16px;margin-top:20px}
+  .vote-big{display:flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:var(--font-display);font-weight:600;font-size:14px;padding:8px 18px;border-radius:var(--radius);cursor:pointer;transition:all .2s}
+  .vote-big:hover,.vote-big.voted{border-color:var(--accent);color:var(--accent);background:rgba(200,255,0,.06)}
+  .diff-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-family:var(--font-mono);font-size:12px}
+
+  /* ═══ WORKFLOW PANEL ═══ */
+  .wf-section{margin-top:28px;border-top:1px solid var(--border);padding-top:24px}
+  .wf-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .wf-title{font-family:var(--font-display);font-weight:800;font-size:16px;color:var(--accent3)}
+  .wf-subtitle{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);margin-top:3px}
+  .wf-tag-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .wf-tab-btn{font-family:var(--font-mono);font-size:11px;padding:4px 12px;border-radius:2px;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;transition:all .15s}
+  .wf-tab-btn.active{border-color:var(--accent3);background:rgba(0,212,255,.08);color:var(--accent3)}
+
+  /* pipeline */
+  .pipeline{display:flex;align-items:flex-start;overflow-x:auto;padding-bottom:12px;margin-bottom:20px;gap:0}
+  .pipeline::-webkit-scrollbar{height:4px}
+  .pipeline::-webkit-scrollbar-track{background:var(--bg)}
+  .pipeline::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  .pipe-node{flex-shrink:0;width:168px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:12px;position:relative;transition:border-color .2s}
+  .pipe-node:hover{border-color:var(--accent3)}
+  .pipe-node.bottleneck{border-color:rgba(255,77,109,.5)}
+  .pipe-node.bottleneck::after{content:'⚠ 瓶颈';position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:9px;background:var(--accent2);color:#fff;padding:1px 7px;border-radius:2px;white-space:nowrap}
+  .pipe-arrow{flex-shrink:0;display:flex;align-items:center;padding:0 3px;margin-top:22px;color:var(--text-dim);font-size:16px}
+  .pipe-step{font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:.08em;margin-bottom:4px}
+  .pipe-name{font-family:var(--font-display);font-weight:600;font-size:12px;color:var(--text);margin-bottom:8px;line-height:1.3}
+  .pipe-tools{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:7px}
+  .pipe-tool{font-family:var(--font-mono);font-size:10px;padding:2px 6px;border-radius:2px;display:inline-block}
+  .t-model{background:rgba(200,255,0,.1);color:#c8ff00;border:1px solid rgba(200,255,0,.25)}
+  .t-lib{background:rgba(0,212,255,.1);color:#00d4ff;border:1px solid rgba(0,212,255,.25)}
+  .t-api{background:rgba(181,123,255,.1);color:#b57bff;border:1px solid rgba(181,123,255,.25)}
+  .t-hw{background:rgba(255,159,67,.1);color:#ff9f43;border:1px solid rgba(255,159,67,.25)}
+  .t-cloud{background:rgba(38,222,129,.1);color:#26de81;border:1px solid rgba(38,222,129,.25)}
+  .pipe-desc{font-size:11px;color:var(--text-muted);line-height:1.5}
+  .pipe-time{font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-top:6px;border-top:1px solid var(--border);padding-top:4px}
+
+  /* mvp */
+  .mvp-box{background:rgba(200,255,0,.03);border:1px solid rgba(200,255,0,.18);border-radius:4px;padding:14px 16px}
+  .mvp-label{font-family:var(--font-mono);font-size:10px;color:var(--accent);letter-spacing:.1em;margin-bottom:10px}
+  .mvp-steps{list-style:none}
+  .mvp-steps li{font-family:var(--font-mono);font-size:12px;color:var(--text-muted);padding:5px 0;border-bottom:1px solid rgba(200,255,0,.06);display:flex;gap:10px;align-items:flex-start;line-height:1.5}
+  .mvp-steps li:last-child{border-bottom:none}
+  .mvp-num{color:var(--accent);flex-shrink:0;min-width:18px}
+  .mvp-time{font-family:var(--font-mono);font-size:9px;color:var(--text-dim);flex-shrink:0;padding-top:2px}
+  .mvp-time-total{font-family:var(--font-mono);font-size:11px;color:var(--accent3);margin-top:10px;padding-top:8px;border-top:1px solid rgba(0,212,255,.12)}
+
+  /* tool legend */
+  .tool-legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .legend-item{font-family:var(--font-mono);font-size:10px;display:flex;align-items:center;gap:5px;color:var(--text-muted)}
+  .legend-dot{width:8px;height:8px;border-radius:1px}
+
+  @keyframes pulse{0%,100%{opacity:.2}50%{opacity:1}}
+  .dot-pulse{display:inline-block;animation:pulse 1.2s ease-in-out infinite;font-size:10px;color:var(--accent3)}
+
+  body::before{content:'';position:fixed;inset:0;opacity:.025;pointer-events:none;z-index:999;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");background-size:128px}
+  ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">SPARK <span>特效灵感库</span></div>
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input type="text" id="searchInput" placeholder="搜索标题、描述...">
+  </div>
+  <div class="header-actions">
+    <div class="stat-badge" id="countBadge">共 <b>0</b> 条</div>
+    <button class="btn-add" onclick="openAddModal()">+ 存入灵感</button>
+  </div>
+</header>
+
+<div class="filter-bar">
+  <span class="filter-label">技术标签</span>
+  <button class="tag-btn cat-ai"     data-tag="AI生成"   onclick="toggleFilter(this)">AI生成</button>
+  <button class="tag-btn cat-ai"     data-tag="风格迁移"  onclick="toggleFilter(this)">风格迁移</button>
+  <button class="tag-btn cat-body"   data-tag="肢体识别"  onclick="toggleFilter(this)">肢体识别</button>
+  <button class="tag-btn cat-body"   data-tag="面部识别"  onclick="toggleFilter(this)">面部识别</button>
+  <button class="tag-btn cat-body"   data-tag="手势识别"  onclick="toggleFilter(this)">手势识别</button>
+  <button class="tag-btn cat-fx"     data-tag="背景替换"  onclick="toggleFilter(this)">背景替换</button>
+  <button class="tag-btn cat-fx"     data-tag="粒子特效"  onclick="toggleFilter(this)">粒子特效</button>
+  <button class="tag-btn cat-fx"     data-tag="光影特效"  onclick="toggleFilter(this)">光影特效</button>
+  <button class="tag-btn cat-ar"     data-tag="AR叠加"    onclick="toggleFilter(this)">AR叠加</button>
+  <button class="tag-btn cat-ar"     data-tag="3D追踪"    onclick="toggleFilter(this)">3D追踪</button>
+  <button class="tag-btn cat-camera" data-tag="镜头运镜"  onclick="toggleFilter(this)">镜头运镜</button>
+  <button class="tag-btn cat-audio"  data-tag="音频驱动"  onclick="toggleFilter(this)">音频驱动</button>
+  <button class="tag-btn cat-social" data-tag="互动玩法"  onclick="toggleFilter(this)">互动玩法</button>
+  <button class="tag-btn cat-social" data-tag="合拍/分屏" onclick="toggleFilter(this)">合拍/分屏</button>
+  <div class="divider"></div>
+  <span class="filter-label">难度</span>
+  <div class="diff-filter">
+    <div class="diff-dot" data-d="1" onclick="toggleDiff(this)">1</div>
+    <div class="diff-dot" data-d="2" onclick="toggleDiff(this)">2</div>
+    <div class="diff-dot" data-d="3" onclick="toggleDiff(this)">3</div>
+    <div class="diff-dot" data-d="4" onclick="toggleDiff(this)">4</div>
+    <div class="diff-dot" data-d="5" onclick="toggleDiff(this)">5</div>
+  </div>
+  <div class="divider"></div>
+  <span class="filter-label">来源</span>
+  <button class="tag-btn" data-platform="TikTok"   onclick="toggleFilter(this)">TikTok</button>
+  <button class="tag-btn" data-platform="Instagram" onclick="toggleFilter(this)">Instagram</button>
+  <button class="tag-btn" data-platform="YouTube"   onclick="toggleFilter(this)">YouTube</button>
+  <button class="tag-btn" data-platform="Snapchat"  onclick="toggleFilter(this)">Snapchat</button>
+  <button class="tag-btn" data-platform="BeReal"    onclick="toggleFilter(this)">BeReal</button>
+  <button class="tag-btn" data-platform="其他"      onclick="toggleFilter(this)">其他</button>
+  <div class="divider"></div>
+  <button class="tag-btn" onclick="clearAll()" style="color:var(--accent2);border-color:rgba(255,77,109,.3)">✕ 清除</button>
+</div>
+
+<main class="main"><div class="grid" id="grid"></div></main>
+
+<!-- ADD MODAL -->
+<div class="overlay" id="addOverlay">
+  <div class="modal">
+    <div class="modal-title">存入灵感</div>
+    <div class="modal-sub">// 粘贴链接后 AI 自动分析 — 标签、难度、描述全部帮你填好</div>
+    <div class="form-group">
+      <div class="form-label">内容类型</div>
+      <div class="type-tabs">
+        <div class="type-tab active" data-type="link"  onclick="switchType('link')">🔗 网页链接</div>
+        <div class="type-tab"        data-type="image" onclick="switchType('image')">🖼 截图上传</div>
+        <div class="type-tab"        data-type="video" onclick="switchType('video')">🎬 视频文件</div>
+      </div>
+    </div>
+
+    <!-- URL input with AI analyze button -->
+    <div class="form-group" id="urlGroup">
+      <div class="form-label">URL <span class="required">*</span></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" class="form-input" id="urlInput" placeholder="粘贴链接，然后点击 AI 分析 →" style="flex:1" onkeydown="if(event.key==='Enter')analyzeUrl()">
+        <button id="analyzeBtn" onclick="analyzeUrl()" style="flex-shrink:0;background:var(--accent3);border:none;color:#000;font-family:var(--font-mono);font-size:11px;padding:10px 14px;border-radius:var(--radius);cursor:pointer;white-space:nowrap;transition:opacity .2s;font-weight:700">✦ AI 分析</button>
+      </div>
+    </div>
+
+    <!-- AI analysis result panel -->
+    <div id="aiResultPanel" style="display:none;margin-bottom:18px;border:1px solid rgba(0,212,255,.3);border-radius:4px;overflow:hidden">
+      <div style="background:rgba(0,212,255,.07);padding:8px 14px;font-family:var(--font-mono);font-size:10px;color:var(--accent3);letter-spacing:.08em;display:flex;align-items:center;justify-content:space-between">
+        <span id="aiStatusText">✦ AI 正在分析...</span>
+        <span id="aiEditHint" style="display:none;color:var(--text-muted)">↓ 结果可直接编辑</span>
+      </div>
+      <div id="aiResultBody" style="padding:12px 14px">
+        <div class="ai-loading" id="aiLoadingAnim">
+          <div style="display:flex;gap:6px;align-items:center;color:var(--text-muted);font-family:var(--font-mono);font-size:12px">
+            <span class="dot-pulse">●</span><span class="dot-pulse" style="animation-delay:.2s">●</span><span class="dot-pulse" style="animation-delay:.4s">●</span>
+            <span style="margin-left:4px">正在读取页面内容...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="upload-area" id="uploadArea" onclick="triggerUpload()">
+      <p>📁 点击选择文件</p>
+      <p style="margin-top:6px;font-size:10px">支持 JPG / PNG / GIF / MP4 / MOV，≤ 50MB</p>
+      <input type="file" id="fileInput" style="display:none" accept="image/*,video/*" onchange="handleFile(this)">
+    </div>
+
+    <div class="form-group" id="titleGroup">
+      <div class="form-label">标题 <span class="required">*</span> <span id="titleAiBadge" style="display:none;font-size:9px;background:rgba(0,212,255,.15);color:var(--accent3);border:1px solid rgba(0,212,255,.3);padding:1px 6px;border-radius:2px">AI 生成</span></div>
+      <input type="text" class="form-input" id="titleInput" placeholder="简短描述这个特效玩法...">
+    </div>
+    <div class="form-group">
+      <div class="form-label">备注 <span id="noteAiBadge" style="display:none;font-size:9px;background:rgba(0,212,255,.15);color:var(--accent3);border:1px solid rgba(0,212,255,.3);padding:1px 6px;border-radius:2px">AI 生成</span></div>
+      <textarea class="form-textarea" id="noteInput" placeholder="值得关注的细节、灵感点..."></textarea>
+    </div>
+    <div class="form-group">
+      <div class="form-label">来源平台</div>
+      <select class="form-input" id="platformInput">
+        <option>TikTok</option><option>Instagram</option><option>YouTube</option><option>Snapchat</option><option>BeReal</option><option>其他</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <div class="form-label">技术标签 <span id="tagAiBadge" style="display:none;font-size:9px;background:rgba(0,212,255,.15);color:var(--accent3);border:1px solid rgba(0,212,255,.3);padding:1px 6px;border-radius:2px">AI 推荐</span> <span style="color:var(--text-dim);font-size:10px">— 可手动调整</span></div>
+      <div class="tag-select-grid" id="tagSelectGrid">
+        <button class="tag-select-btn cat-ai"     data-t="AI生成"   onclick="toggleTag(this)">AI生成</button>
+        <button class="tag-select-btn cat-ai"     data-t="风格迁移"  onclick="toggleTag(this)">风格迁移</button>
+        <button class="tag-select-btn cat-body"   data-t="肢体识别"  onclick="toggleTag(this)">肢体识别</button>
+        <button class="tag-select-btn cat-body"   data-t="面部识别"  onclick="toggleTag(this)">面部识别</button>
+        <button class="tag-select-btn cat-body"   data-t="手势识别"  onclick="toggleTag(this)">手势识别</button>
+        <button class="tag-select-btn cat-fx"     data-t="背景替换"  onclick="toggleTag(this)">背景替换</button>
+        <button class="tag-select-btn cat-fx"     data-t="粒子特效"  onclick="toggleTag(this)">粒子特效</button>
+        <button class="tag-select-btn cat-fx"     data-t="光影特效"  onclick="toggleTag(this)">光影特效</button>
+        <button class="tag-select-btn cat-ar"     data-t="AR叠加"    onclick="toggleTag(this)">AR叠加</button>
+        <button class="tag-select-btn cat-ar"     data-t="3D追踪"    onclick="toggleTag(this)">3D追踪</button>
+        <button class="tag-select-btn cat-camera" data-t="镜头运镜"  onclick="toggleTag(this)">镜头运镜</button>
+        <button class="tag-select-btn cat-audio"  data-t="音频驱动"  onclick="toggleTag(this)">音频驱动</button>
+        <button class="tag-select-btn cat-social" data-t="互动玩法"  onclick="toggleTag(this)">互动玩法</button>
+        <button class="tag-select-btn cat-social" data-t="合拍/分屏" onclick="toggleTag(this)">合拍/分屏</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="form-label">落地难度 <span id="diffAiBadge" style="display:none;font-size:9px;background:rgba(0,212,255,.15);color:var(--accent3);border:1px solid rgba(0,212,255,.3);padding:1px 6px;border-radius:2px">AI 评分</span> <span style="color:var(--text-dim);font-size:10px">— 可手动调整</span></div>
+      <div class="diff-select">
+        <div class="diff-opt" data-d="1" onclick="selectDiff(this)"><div class="num" style="color:#26de81">1</div><div class="lbl">简单</div></div>
+        <div class="diff-opt" data-d="2" onclick="selectDiff(this)"><div class="num" style="color:#c8ff00">2</div><div class="lbl">较易</div></div>
+        <div class="diff-opt sel" data-d="3" onclick="selectDiff(this)"><div class="num" style="color:#ff9f43">3</div><div class="lbl">中等</div></div>
+        <div class="diff-opt" data-d="4" onclick="selectDiff(this)"><div class="num" style="color:#ff4d6d">4</div><div class="lbl">复杂</div></div>
+        <div class="diff-opt" data-d="5" onclick="selectDiff(this)"><div class="num" style="color:#b57bff">5</div><div class="lbl">极难</div></div>
+      </div>
+      <div id="diffReason" style="display:none;margin-top:8px;font-family:var(--font-mono);font-size:10px;color:var(--text-muted);padding:6px 10px;background:var(--surface2);border-radius:2px;line-height:1.6"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeAddModal()">取消</button>
+      <button class="btn-submit" onclick="submitEntry()">存入灵感库 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="overlay" id="detailOverlay">
+  <div class="detail-modal" id="detailModal"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// WORKFLOW DATABASE — 14 标签 × 完整 Pipeline
+// ══════════════════════════════════════════
+const WF = {
+'风格迁移':{icon:'🎨',sub:'将参考视频的视觉风格实时迁移到用户摄像头画面',
+  nodes:[
+    {s:'01',n:'输入采集',tools:[{l:'用户摄像头',c:'t-hw'},{l:'风格参考图/视频',c:'t-hw'}],d:'获取实时视频帧 + 目标风格样本',t:'实时'},
+    {s:'02',n:'VLM内容理解',tools:[{l:'GPT-4V',c:'t-api'},{l:'LLaVA',c:'t-model'}],d:'分析场景主体、光照、构图，生成语义描述，引导风格提取方向',t:'~200ms/帧'},
+    {s:'03',n:'风格特征提取',tools:[{l:'CLIP',c:'t-model'},{l:'DINOv2',c:'t-model'}],d:'提取风格embedding向量，解耦内容特征与风格特征',t:'~50ms'},
+    {s:'04',n:'风格迁移推理',tools:[{l:'IP-Adapter',c:'t-model'},{l:'ControlNet',c:'t-model'}],d:'以内容特征为锚点，注入风格embedding生成目标帧',t:'~80ms/帧',b:true},
+    {s:'05',n:'时序一致性',tools:[{l:'CoDeF',c:'t-model'},{l:'FLATTEN',c:'t-lib'}],d:'帧间风格稳定，消除闪烁——拉开与竞品差距的核心',t:'~30ms'},
+    {s:'06',n:'合成输出',tools:[{l:'WebGL',c:'t-lib'},{l:'FFmpeg',c:'t-lib'}],d:'风格化帧混合回原始视频流，前端渲染',t:'实时'},
+  ],
+  mvp:[{t:'0.5h',s:'安装 ComfyUI + IP-Adapter 节点包'},{t:'1h',s:'载入 SD1.5，配置风格参考图输入，Denoise 调至 0.55–0.7'},{t:'1h',s:'接摄像头输入，OBS虚拟摄像头实时预览'},{t:'1h',s:'录制5秒对比帧间抖动，用seed固定策略改善'},{t:'0.5h',s:'包装成可演示的滤镜UI'}],
+  eta:'半天出可演示原型'},
+
+'AI生成':{icon:'🤖',sub:'基于提示词/图像，实时生成或改写视频内容',
+  nodes:[
+    {s:'01',n:'输入采集',tools:[{l:'摄像头',c:'t-hw'},{l:'文本触发词',c:'t-hw'}],d:'获取用户自拍帧 + 触发提示（贴纸、按钮等）',t:'实时'},
+    {s:'02',n:'提示词工程',tools:[{l:'GPT-4o',c:'t-api'},{l:'Prompt模板库',c:'t-lib'}],d:'将用户操作转为结构化提示词，注入场景/风格/主体',t:'~100ms'},
+    {s:'03',n:'图生图推理',tools:[{l:'SDXL-Turbo',c:'t-model'},{l:'LCM-LoRA',c:'t-model'}],d:'以原始帧为条件推理目标图（≤4步保证实时）',t:'~120ms/帧',b:true},
+    {s:'04',n:'人像分割',tools:[{l:'MediaPipe',c:'t-lib'},{l:'SAM2',c:'t-model'}],d:'精确分割人像与背景，只对指定区域应用生成结果',t:'~20ms'},
+    {s:'05',n:'合成渲染',tools:[{l:'WebGL Shader',c:'t-lib'},{l:'Canvas API',c:'t-lib'}],d:'人像+生成背景 alpha blend 合成，前端实时渲染',t:'<16ms'},
+  ],
+  mvp:[{t:'0.5h',s:'本地部署 SDXL-Turbo（4步推理，A100约70ms）'},{t:'1h',s:'接 MediaPipe Selfie Seg 做人像抠图'},{t:'1h',s:'写提示词模板：季节×场景×艺术风格三维度'},{t:'1h',s:'WebRTC推帧→后端推理→回传合成，测端到端延迟'}],
+  eta:'1天出端到端闭环'},
+
+'肢体识别':{icon:'🕺',sub:'实时检测全身骨骼关键点，驱动特效、互动和动作评分',
+  nodes:[
+    {s:'01',n:'视频输入',tools:[{l:'摄像头',c:'t-hw'}],d:'实时采集，建议640×480+，正面光照充足',t:'实时'},
+    {s:'02',n:'人体检测',tools:[{l:'YOLOv8-pose',c:'t-model'},{l:'BlazePose',c:'t-model'}],d:'检测画面中人体BBox，支持多人（最多6人）',t:'~15ms'},
+    {s:'03',n:'33关键点提取',tools:[{l:'MediaPipe Pose',c:'t-lib'},{l:'OpenPose',c:'t-model'}],d:'肩/肘/腕/髋/膝/踝等33点，输出3D坐标+置信度',t:'~10ms'},
+    {s:'04',n:'动作分类（选）',tools:[{l:'LSTM',c:'t-model'},{l:'Transformer',c:'t-model'}],d:'时序关键点识别动作语义，触发对应特效',t:'~20ms'},
+    {s:'05',n:'特效绑定',tools:[{l:'Three.js',c:'t-lib'},{l:'Lottie',c:'t-lib'}],d:'粒子/贴纸/轨迹锚定到特定关键点坐标',t:'<16ms',b:true},
+    {s:'06',n:'渲染合成',tools:[{l:'WebGL',c:'t-lib'},{l:'OffscreenCanvas',c:'t-lib'}],d:'特效层叠加到原始视频帧输出',t:'<16ms'},
+  ],
+  mvp:[{t:'0.5h',s:'浏览器跑 MediaPipe Pose Demo（无需后端）'},{t:'1h',s:'Three.js 粒子系统绑定 wrist 关键点坐标'},{t:'1h',s:'存最近20帧坐标，绘制Bezier轨迹拖尾'},{t:'0.5h',s:'置信度阈值过滤（<0.7不渲染），消抖'}],
+  eta:'半天出可玩原型，纯前端'},
+
+'面部识别':{icon:'😶',sub:'高精度面部关键点检测，驱动表情特效和身份融合',
+  nodes:[
+    {s:'01',n:'视频帧输入',tools:[{l:'摄像头',c:'t-hw'}],d:'实时采集，建议正面光照',t:'实时'},
+    {s:'02',n:'人脸检测',tools:[{l:'RetinaFace',c:'t-model'},{l:'MediaPipe FaceDet',c:'t-lib'}],d:'检测人脸BBox，支持多人/侧脸/遮挡',t:'~8ms'},
+    {s:'03',n:'关键点回归',tools:[{l:'MediaPipe FaceMesh',c:'t-lib'},{l:'3DDFA_V2',c:'t-model'}],d:'478个面部关键点，输出3D空间坐标',t:'~12ms'},
+    {s:'04',n:'表情系数估计',tools:[{l:'Action Units',c:'t-model'},{l:'ARKit BlendShapes',c:'t-api'}],d:'52个表情系数，驱动后续特效参数',t:'~10ms'},
+    {s:'05',n:'特效/融合执行',tools:[{l:'FaceSwap',c:'t-model'},{l:'ControlNet',c:'t-model'}],d:'表情驱动贴纸变形、面部融合、AR妆容叠加',t:'~30ms',b:true},
+    {s:'06',n:'Alpha合成输出',tools:[{l:'Canvas API',c:'t-lib'}],d:'面部区域精确alpha融合回原始帧',t:'<10ms'},
+  ],
+  mvp:[{t:'0.5h',s:'MediaPipe FaceMesh 浏览器跑通（WASM加速）'},{t:'1h',s:'478关键点实现眼部放大：眼睛区域局部warp变形'},{t:'1h',s:'嘴巴开合驱动粒子：监测上下唇距离触发事件'},{t:'1h',s:'接 Snap Camera Kit SDK，对比商业级效果上限'}],
+  eta:'半天，纯前端WASM'},
+
+'手势识别':{icon:'✋',sub:'识别手部21关键点与手势语义，实现免触控交互',
+  nodes:[
+    {s:'01',n:'手部检测',tools:[{l:'MediaPipe Hands',c:'t-lib'},{l:'YOLOv8',c:'t-model'}],d:'定位手部区域，支持双手同时检测',t:'~10ms'},
+    {s:'02',n:'21关键点提取',tools:[{l:'MediaPipe Hands',c:'t-lib'}],d:'指尖/指节/掌根21点，输出3D坐标',t:'~8ms'},
+    {s:'03',n:'手势分类',tools:[{l:'规则引擎',c:'t-lib'},{l:'GestureRecognizer',c:'t-lib'}],d:'基于关键点角度和距离判断手势语义',t:'~5ms'},
+    {s:'04',n:'意图映射',tools:[{l:'自定义逻辑',c:'t-lib'}],d:'手势 → 业务操作：特效触发/参数调节/UI控制',t:'<5ms'},
+    {s:'05',n:'视觉反馈',tools:[{l:'Lottie',c:'t-lib'},{l:'CSS Animation',c:'t-lib'}],d:'手势确认视觉/震动反馈，防误触',t:'<16ms',b:true},
+  ],
+  mvp:[{t:'0.5h',s:'MediaPipe Hands 浏览器跑通，观察21点坐标'},{t:'1h',s:'写规则：拇指食指捏合=拍照；五指张开=切滤镜'},{t:'1h',s:'双指距离变化映射到画面缩放（pinch-to-zoom）'},{t:'0.5h',s:'加防抖：连续5帧稳定才触发，防误操作'}],
+  eta:'3小时出手势控制demo'},
+
+'背景替换':{icon:'🌅',sub:'实时分割人像与背景，替换为虚拟场景或AI生成内容',
+  nodes:[
+    {s:'01',n:'视频帧输入',tools:[{l:'摄像头',c:'t-hw'}],d:'实时采集，用户与背景对比度越高越好',t:'实时'},
+    {s:'02',n:'语义分割',tools:[{l:'MediaPipe Selfie Seg',c:'t-lib'},{l:'PP-HumanSeg',c:'t-model'}],d:'逐像素生成人像mask，边缘处理是质量关键',t:'~15ms',b:true},
+    {s:'03',n:'边缘精细化',tools:[{l:'RobustVideoMatting',c:'t-model'},{l:'FBA-Matting',c:'t-model'}],d:'对头发、手指做alpha matting精细处理',t:'~20ms'},
+    {s:'04',n:'背景资产',tools:[{l:'CDN图片/视频',c:'t-cloud'},{l:'DALL-E 3',c:'t-api'}],d:'预加载静态背景，或接AI实时生成背景',t:'预加载'},
+    {s:'05',n:'合成渲染',tools:[{l:'WebGL Shader',c:'t-lib'},{l:'Canvas API',c:'t-lib'}],d:'基于mask合成人像+背景，加阴影/光照匹配',t:'<16ms'},
+  ],
+  mvp:[{t:'0.5h',s:'MediaPipe Selfie Seg 跑通，检查mask边缘质量'},{t:'0.5h',s:'Canvas2D 合成人像+静态背景图，测帧率'},{t:'1h',s:'升级到 RobustVideoMatting，对比发丝改善'},{t:'1h',s:'接 DALL-E 3：用户输入场景词，实时生成背景'},{t:'0.5h',s:'简单光照补偿：检测人像亮度，调整背景曝光'}],
+  eta:'3-4小时出高质量原型'},
+
+'粒子特效':{icon:'✨',sub:'基于物理模拟的实时粒子系统，响应人体动作或音频',
+  nodes:[
+    {s:'01',n:'驱动信号输入',tools:[{l:'关键点坐标',c:'t-lib'},{l:'音频振幅',c:'t-lib'}],d:'从姿态/音频模块接收驱动参数：位置/速度/振幅',t:'实时'},
+    {s:'02',n:'粒子发射器',tools:[{l:'Three.js',c:'t-lib'},{l:'Pixi.js',c:'t-lib'}],d:'在锚点生成粒子，设定初速度/方向角/生命周期',t:'<2ms'},
+    {s:'03',n:'物理模拟',tools:[{l:'自定义物理',c:'t-lib'},{l:'Cannon.js',c:'t-lib'}],d:'重力/阻力/碰撞/磁场叠加，逐帧更新粒子状态',t:'<5ms'},
+    {s:'04',n:'GPU渲染',tools:[{l:'WebGL Instanced',c:'t-lib'},{l:'WebGPU',c:'t-lib'}],d:'Instanced Drawing 一次draw call渲染10万+粒子',t:'<8ms',b:true},
+    {s:'05',n:'视频合成',tools:[{l:'OffscreenCanvas',c:'t-lib'}],d:'粒子层与摄像头视频流合成输出',t:'<5ms'},
+  ],
+  mvp:[{t:'1h',s:'Three.js BufferGeometry + Points，预分配粒子内存池'},{t:'1h',s:'绑定 MediaPipe wrist 坐标作为发射器位置'},{t:'1h',s:'加重力和生命周期衰减，粒子渐小渐透明消失'},{t:'1h',s:'换贴图：圆形→星形/花瓣形Sprite，视觉档次提升'}],
+  eta:'半天出流畅粒子效果'},
+
+'光影特效':{icon:'🌟',sub:'实时光源模拟、阴影投射与镜头光晕后处理',
+  nodes:[
+    {s:'01',n:'场景深度分析',tools:[{l:'MiDaS v3.1',c:'t-model'},{l:'DPT',c:'t-model'}],d:'从单目摄像头估计深度图，理解场景3D结构',t:'~30ms'},
+    {s:'02',n:'光源检测',tools:[{l:'亮度分析',c:'t-lib'},{l:'HDR估计',c:'t-model'}],d:'检测画面光源位置/色温，或使用虚拟光源覆盖',t:'~10ms'},
+    {s:'03',n:'法线图估计',tools:[{l:'NormalBAE',c:'t-model'},{l:'Omnidata',c:'t-model'}],d:'RGB→法线图，用于物理光照计算',t:'~25ms',b:true},
+    {s:'04',n:'PBR光照渲染',tools:[{l:'WebGL PBR',c:'t-lib'},{l:'Three.js',c:'t-lib'}],d:'基于PBR模型计算漫反射/高光/AO',t:'~15ms'},
+    {s:'05',n:'镜头后处理',tools:[{l:'PostProcessing.js',c:'t-lib'},{l:'GLSL Shader',c:'t-lib'}],d:'Bloom/Lens Flare/Chromatic Aberration等镜头效果',t:'~8ms'},
+  ],
+  mvp:[{t:'1h',s:'Three.js 加 PointLight 虚拟光源，视频帧为平面纹理'},{t:'1h',s:'法线图实现简单凹凸光照效果'},{t:'1h',s:'加 Bloom 后处理，参数调到夸张好看'},{t:'0.5h',s:'摄像头亮度检测→强光时触发 lens flare'}],
+  eta:'半天出炫光视觉效果'},
+
+'AR叠加':{icon:'🥽',sub:'将虚拟3D物体稳定锚定叠加到真实场景',
+  nodes:[
+    {s:'01',n:'特征点检测',tools:[{l:'ORB-SLAM3',c:'t-model'},{l:'WebXR',c:'t-api'}],d:'提取帧中稳定特征点，建立空间地图',t:'~20ms'},
+    {s:'02',n:'位姿估计',tools:[{l:'OpenCV PnP',c:'t-lib'},{l:'AR.js',c:'t-lib'}],d:'计算摄像头6DoF位姿（平移+旋转）',t:'~15ms',b:true},
+    {s:'03',n:'平面检测',tools:[{l:'ARKit/ARCore',c:'t-api'},{l:'Plane Segmentation',c:'t-model'}],d:'识别水平/垂直平面，作为虚拟物体放置表面',t:'~25ms'},
+    {s:'04',n:'3D资产渲染',tools:[{l:'Three.js',c:'t-lib'},{l:'Babylon.js',c:'t-lib'}],d:'加载glTF模型，依据位姿矩阵投影渲染',t:'~10ms'},
+    {s:'05',n:'遮挡处理',tools:[{l:'深度遮挡',c:'t-model'},{l:'MaskRCNN',c:'t-model'}],d:'真实物体遮挡虚拟物体（提升真实感的关键）',t:'~20ms'},
+  ],
+  mvp:[{t:'0.5h',s:'AR.js + Three.js Hiro marker追踪跑通'},{t:'1h',s:'替换为平面检测，桌面放置旋转3D物体'},{t:'1h',s:'Sketchfab 下载免费glTF模型替换测试几何体'},{t:'1h',s:'AR物体下方加假阴影平面，增强接地感'},{t:'1h',s:'包装成滤镜形态：点击放置，录制分享'}],
+  eta:'1天出可分享AR效果'},
+
+'3D追踪':{icon:'📐',sub:'估计物体或人体的3D空间位置和姿态',
+  nodes:[
+    {s:'01',n:'2D检测',tools:[{l:'YOLOv8',c:'t-model'},{l:'Detectron2',c:'t-model'}],d:'检测目标2D边界框和关键点',t:'~15ms'},
+    {s:'02',n:'深度估计',tools:[{l:'MiDaS v3.1',c:'t-model'},{l:'DPT',c:'t-model'}],d:'单目深度估计，推断关键点相对深度',t:'~30ms',b:true},
+    {s:'03',n:'3D提升',tools:[{l:'VideoPose3D',c:'t-model'},{l:'PoseLifter',c:'t-model'}],d:'2D关键点+深度→相机坐标系3D坐标',t:'~10ms'},
+    {s:'04',n:'滤波平滑',tools:[{l:'卡尔曼滤波',c:'t-lib'},{l:'One Euro Filter',c:'t-lib'}],d:'消除3D坐标抖动，保证视觉平稳追踪',t:'<5ms'},
+    {s:'05',n:'3D特效挂载',tools:[{l:'Three.js',c:'t-lib'}],d:'3D坐标驱动虚拟物体精准跟随',t:'<10ms'},
+  ],
+  mvp:[{t:'1h',s:'MediaPipe Holistic 同时获取面+手+身体3D关键点'},{t:'1h',s:'Three.js 渲染3D骨架，验证坐标准确性'},{t:'1h',s:'头顶坐标偏移Y轴挂载帽子模型'},{t:'0.5h',s:'加 OneEuro 滤波，对比抖动改善'}],
+  eta:'半天出3D追踪原型'},
+
+'镜头运镜':{icon:'🎬',sub:'分析和模拟专业运镜，或实时做镜头后处理',
+  nodes:[
+    {s:'01',n:'光流估计',tools:[{l:'RAFT',c:'t-model'},{l:'OpenCV Dense OF',c:'t-lib'}],d:'计算相邻帧像素运动向量，感知摄像头/主体运动',t:'~25ms'},
+    {s:'02',n:'运镜分类',tools:[{l:'运动分析规则',c:'t-lib'},{l:'CNN分类器',c:'t-model'}],d:'识别推/拉/摇/移/跟等运镜类型',t:'~10ms'},
+    {s:'03',n:'稳定/增强',tools:[{l:'DAIN',c:'t-model'},{l:'Warp Stabilizer',c:'t-lib'}],d:'消抖或反向增强晃动感（手持感有独特风格）',t:'~20ms',b:true},
+    {s:'04',n:'镜头畸变',tools:[{l:'GLSL Shader',c:'t-lib'}],d:'鱼眼/老电影竖纹/呼吸感等镜头特质',t:'<8ms'},
+    {s:'05',n:'色彩分级',tools:[{l:'LUT贴图',c:'t-lib'},{l:'WebGL',c:'t-lib'}],d:'专业调色LUT：电影感/胶片颗粒/高对比',t:'<5ms'},
+  ],
+  mvp:[{t:'0.5h',s:'WebGL Fragment Shader 实现LUT三维颜色查找表'},{t:'1h',s:'实现鱼眼/桶形畸变shader，参数可调'},{t:'1h',s:'Canvas叠加胶片颗粒噪点 + 暗角vignette'},{t:'0.5h',s:'呼吸感：缩放参数随sin曲线微小振荡'}],
+  eta:'3小时出复古胶片镜头效果'},
+
+'音频驱动':{icon:'🎵',sub:'实时分析音频特征，将声音转化为视觉特效驱动参数',
+  nodes:[
+    {s:'01',n:'音频采集',tools:[{l:'Web Audio API',c:'t-lib'}],d:'getUserMedia获取麦克风，创建AudioContext分析节点',t:'实时'},
+    {s:'02',n:'频谱分析',tools:[{l:'AnalyserNode FFT',c:'t-lib'}],d:'FFT提取低/中/高频能量，帧率60fps',t:'<2ms'},
+    {s:'03',n:'节拍检测',tools:[{l:'Meyda.js',c:'t-lib'},{l:'Essentia.js',c:'t-lib'}],d:'检测BPM和每个beat瞬间，用于节奏同步',t:'~5ms'},
+    {s:'04',n:'特征映射',tools:[{l:'自定义曲线',c:'t-lib'}],d:'振幅→粒子数 / 低频→缩放 / 高频→颜色',t:'<2ms'},
+    {s:'05',n:'视觉渲染',tools:[{l:'Three.js',c:'t-lib'},{l:'p5.js',c:'t-lib'}],d:'实时刷新，用lerp平滑防止突变闪烁',t:'<16ms',b:true},
+  ],
+  mvp:[{t:'0.5h',s:'Web Audio API接麦克风，AnalyserNode拿FFT数组'},{t:'1h',s:'Canvas实时绘制频谱柱状图，验证低/中/高频响应'},{t:'1h',s:'Three.js球体：低频振幅→scale，随音乐呼吸'},{t:'1h',s:'Meyda节拍检测，beat触发粒子爆炸'},{t:'0.5h',s:'所有参数加LERP平滑：lerp(cur, target, 0.15)'}],
+  eta:'半天出音乐律动视觉'},
+
+'互动玩法':{icon:'🎮',sub:'设计用户与特效的实时互动机制，提升参与感和传播力',
+  nodes:[
+    {s:'01',n:'用户输入层',tools:[{l:'触控/手势',c:'t-lib'},{l:'语音/姿态',c:'t-lib'}],d:'定义触发方式：点击/手势/声音/动作',t:'实时'},
+    {s:'02',n:'状态机',tools:[{l:'XState',c:'t-lib'},{l:'自定义FSM',c:'t-lib'}],d:'管理玩法状态：待机→激活→高潮→结算→分享',t:'<5ms'},
+    {s:'03',n:'挑战规则引擎',tools:[{l:'自定义逻辑',c:'t-lib'}],d:'评分/计时/连击判定/难度曲线',t:'<5ms'},
+    {s:'04',n:'社交信号设计',tools:[{l:'Canvas文字渲染',c:'t-lib'}],d:'结算画面：分数+成就标签+"发起挑战"——传播的关键节点',t:'UX设计',b:true},
+    {s:'05',n:'视频导出',tools:[{l:'MediaRecorder',c:'t-lib'},{l:'FFmpeg.wasm',c:'t-lib'}],d:'录制互动过程，合成带水印/音乐的可分享视频',t:'后处理'},
+  ],
+  mvp:[{t:'1h',s:'画用户旅程图：触发→玩法→结算→分享，每步≤2操作'},{t:'1h',s:'实现最小核心循环：一个手势触发一个有趣效果'},{t:'1h',s:'做结算画面：大字分数+个性化标签，可截图'},{t:'1h',s:'MediaRecorder录制，浏览器下载mp4，测视频质量'},{t:'0.5h',s:'5人内测，观察首次上手是否需要引导'}],
+  eta:'1天出可内测互动原型'},
+
+'合拍/分屏':{icon:'↔️',sub:'多用户实时同框，实现合拍互动、动作同步和分屏特效',
+  nodes:[
+    {s:'01',n:'多路媒体接入',tools:[{l:'WebRTC',c:'t-lib'},{l:'Agora SDK',c:'t-api'}],d:'P2P或SFU连接，低延迟双路视频流（目标<150ms）',t:'~80ms RTT'},
+    {s:'02',n:'画面布局引擎',tools:[{l:'CSS Grid',c:'t-lib'},{l:'Canvas合成',c:'t-lib'}],d:'分屏比例/布局模式（左右/上下/嵌套）动态切换',t:'<16ms'},
+    {s:'03',n:'同步信号',tools:[{l:'WebSocket',c:'t-lib'},{l:'NTP对齐',c:'t-lib'}],d:'双端时间戳同步，帧对齐精度<50ms',t:'持续',b:true},
+    {s:'04',n:'动作比对（选）',tools:[{l:'姿态相似度',c:'t-model'}],d:'双方姿态余弦相似度，输出同步评分',t:'~15ms'},
+    {s:'05',n:'合拍特效',tools:[{l:'WebGL合成',c:'t-lib'},{l:'GLSL',c:'t-lib'}],d:'分屏边框/跨屏粒子（从一屏飞向另一屏）',t:'<10ms'},
+    {s:'06',n:'视频合成导出',tools:[{l:'MediaRecorder',c:'t-lib'},{l:'FFmpeg.wasm',c:'t-lib'}],d:'双路合并为单个可分享分屏视频',t:'后处理'},
+  ],
+  mvp:[{t:'0.5h',s:'单设备分屏：前置+后置双摄左右排列，验证布局'},{t:'1h',s:'接 Agora 免费额度，两台手机视频通话，测延迟'},{t:'1h',s:'CSS分屏动画：全屏→双屏滑动分裂过渡'},{t:'1h',s:'跨屏粒子：Canvas绘制从左屏飞到右屏的轨迹'},{t:'1h',s:'MediaRecorder导出双屏视频，测微信/TikTok播放'}],
+  eta:'1天出双人合拍demo'},
+};
+
+// ══════════════════════════════════════════
+// DATA LAYER
+// ══════════════════════════════════════════
+const TAG_CATS={'AI生成':'cat-ai','风格迁移':'cat-ai','肢体识别':'cat-body','面部识别':'cat-body','手势识别':'cat-body','背景替换':'cat-fx','粒子特效':'cat-fx','光影特效':'cat-fx','AR叠加':'cat-ar','3D追踪':'cat-ar','镜头运镜':'cat-camera','音频驱动':'cat-audio','互动玩法':'cat-social','合拍/分屏':'cat-social'};
+const DIFF_LABEL=['','简单','较易','中等','复杂','极难'];
+const DIFF_COLOR=['','#26de81','#c8ff00','#ff9f43','#ff4d6d','#b57bff'];
+
+let entries=[];
+let votes=JSON.parse(localStorage.getItem('spark_votes')||'[]');
+let filters={tags:[],diffs:[],platforms:[],q:''};
+let currentType='link',currentFileData=null,selectedDiff=3;
+let _apiBase='';//相对路径，本地开发自动指向 /api/*
+
+// 判断是否在 Vercel 部署环境（非 file:// 和非 localhost 文件形式）
+const IS_HOSTED = location.protocol !== 'file:' && !(location.hostname==='localhost' && !location.pathname.endsWith('.html'));
+
+function save(){
+  // 本地 localStorage 只作 fallback
+  localStorage.setItem('spark_entries',JSON.stringify(entries));
+  localStorage.setItem('spark_votes',JSON.stringify(votes));
+}
+
+// ── 云端数据加载 ──────────────────────────────
+async function loadFromCloud(){
+  try{
+    const resp=await fetch('/api/entries');
+    if(!resp.ok)throw new Error('API '+resp.status);
+    const data=await resp.json();
+    if(Array.isArray(data)&&data.length>=0){
+      entries=data;
+      save();
+    }
+  }catch(e){
+    console.warn('[SPARK] 云端加载失败，使用本地缓存:',e.message);
+    entries=JSON.parse(localStorage.getItem('spark_entries')||'[]');
+  }
+  render();
+}
+
+function toggleFilter(btn){
+  const tag=btn.dataset.tag,plat=btn.dataset.platform;
+  if(tag){filters.tags=filters.tags.includes(tag)?filters.tags.filter(t=>t!==tag):[...filters.tags,tag];btn.classList.toggle('active',filters.tags.includes(tag));}
+  if(plat){filters.platforms=filters.platforms.includes(plat)?filters.platforms.filter(p=>p!==plat):[...filters.platforms,plat];btn.classList.toggle('active',filters.platforms.includes(plat));}
+  render();
+}
+function toggleDiff(dot){const d=parseInt(dot.dataset.d);filters.diffs=filters.diffs.includes(d)?filters.diffs.filter(x=>x!==d):[...filters.diffs,d];dot.classList.toggle('active',filters.diffs.includes(d));render();}
+function clearAll(){filters={tags:[],diffs:[],platforms:[],q:''};document.getElementById('searchInput').value='';document.querySelectorAll('.tag-btn.active,.diff-dot.active').forEach(b=>b.classList.remove('active'));render();}
+document.getElementById('searchInput').addEventListener('input',e=>{filters.q=e.target.value.toLowerCase();render();});
+
+function getFiltered(){
+  return entries.filter(e=>{
+    if(filters.tags.length&&!filters.tags.some(t=>e.tags.includes(t)))return false;
+    if(filters.diffs.length&&!filters.diffs.includes(e.diff))return false;
+    if(filters.platforms.length&&!filters.platforms.includes(e.platform))return false;
+    if(filters.q&&!e.title.toLowerCase().includes(filters.q)&&!(e.note||'').toLowerCase().includes(filters.q))return false;
+    return true;
+  }).sort((a,b)=>b.id-a.id);
+}
+
+function render(){
+  const list=getFiltered();
+  const grid=document.getElementById('grid');
+  document.getElementById('countBadge').innerHTML=`共 <b>${entries.length}</b> 条`;
+  if(!list.length){grid.innerHTML=`<div class="empty-state"><div class="big">✦</div><p>暂无匹配的灵感条目<br>点击右上角「存入灵感」开始建库</p></div>`;return;}
+  const hasWF=tags=>tags&&tags.some(t=>WF[t]);
+  grid.innerHTML=list.map(e=>{
+    const voted=votes.includes(e.id);
+    const th=e.type==='image'&&e.fileData?`<img src="${e.fileData}" alt="" loading="lazy">`
+              :e.type==='video'&&e.fileData?`<div class="thumb-placeholder">▶</div>`
+              :e.thumb?`<img src="${e.thumb}" loading="lazy" onerror="this.style.display='none'">`
+              :`<div class="thumb-placeholder">${e.type==='video'?'▶':e.type==='image'?'🖼':'🔗'}</div>`;
+    const tgs=e.tags.map(t=>`<span class="card-tag ${TAG_CATS[t]||''}">${t}</span>`).join('');
+    return `<div class="card" onclick="openDetail(${e.id})">
+      <div class="card-thumb">${th}
+        <div class="card-type-badge type-${e.type}">${e.type==='link'?'链接':e.type==='image'?'截图':'视频'}</div>
+        <div class="diff-badge diff-${e.diff}">${e.diff}</div>
+        ${hasWF(e.tags)?'<div class="has-workflow-badge">工作流 ▸</div>':''}
+      </div>
+      <div class="card-body">
+        <div class="card-title">${e.title}</div>
+        <div class="card-tags">${tgs}</div>
+        <div class="card-footer">
+          <div class="card-source">${e.platform} · ${timeAgo(e.id)}</div>
+          <button class="vote-btn ${voted?'voted':''}" onclick="event.stopPropagation();toggleVote(${e.id},this)">↑ <span class="vc">${e.votes||0}</span></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function timeAgo(ts){const d=Date.now()-ts;if(d<60000)return '刚刚';if(d<3600000)return Math.floor(d/60000)+'分钟前';if(d<86400000)return Math.floor(d/3600000)+'小时前';return Math.floor(d/86400000)+'天前';}
+
+function toggleVote(id,btn){
+  const e=entries.find(x=>x.id===id);if(!e)return;
+  const isVoted=votes.includes(id);
+  const action=isVoted?'down':'up';
+  if(isVoted){votes=votes.filter(v=>v!==id);e.votes=Math.max(0,(e.votes||1)-1);}
+  else{votes.push(id);e.votes=(e.votes||0)+1;}
+  btn&&btn.classList.toggle('voted',votes.includes(id));
+  btn&&(btn.querySelector('.vc').textContent=e.votes);
+  save();
+  // 异步同步投票到云端
+  fetch('/api/vote',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({id,action})
+  }).then(r=>r.json()).then(d=>{
+    // 用服务端返回的真实票数更新本地
+    if(d.votes!=null){e.votes=d.votes;btn&&(btn.querySelector('.vc').textContent=d.votes);}
+  }).catch(e=>console.warn('[SPARK] 投票同步失败:',e.message));
+}
+
+// ══════════════════════════════════════════
+// WORKFLOW HTML
+// ══════════════════════════════════════════
+function buildWF(tags){
+  const wfTags=tags.filter(t=>WF[t]);
+  if(!wfTags.length)return '';
+
+  const tabsHtml=wfTags.length>1
+    ?`<div class="wf-tag-tabs">${wfTags.map((t,i)=>`<button class="wf-tab-btn ${i===0?'active':''}" onclick="switchWFTab(this,'wfp-${t.replace(/[\/\s]/g,'-')}')">${WF[t].icon} ${t}</button>`).join('')}</div>`:'';
+
+  const legendHtml=`<div class="tool-legend">
+    <span class="legend-item"><span class="legend-dot" style="background:#c8ff00"></span>AI模型</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#00d4ff"></span>开源库/框架</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#b57bff"></span>第三方API</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#ff9f43"></span>硬件</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#26de81"></span>云服务</span>
+  </div>`;
+
+  const panelsHtml=wfTags.map((tag,idx)=>{
+    const wf=WF[tag];
+    const nodesHtml=wf.nodes.map((n,ni)=>{
+      const toolsHtml=n.tools.map(t=>`<span class="pipe-tool ${t.c}">${t.l}</span>`).join('');
+      return `${ni>0?'<div class="pipe-arrow">→</div>':''}
+        <div class="pipe-node${n.b?' bottleneck':''}">
+          <div class="pipe-step">STEP ${n.s}</div>
+          <div class="pipe-name">${n.n}</div>
+          <div class="pipe-tools">${toolsHtml}</div>
+          <div class="pipe-desc">${n.d}</div>
+          <div class="pipe-time">⏱ ${n.t}</div>
+        </div>`;
+    }).join('');
+    const mvpHtml=wf.mvp.map((s,i)=>`<li><span class="mvp-num">${String(i+1).padStart(2,'0')}</span><span class="mvp-time">${s.t}</span><span>${s.s}</span></li>`).join('');
+    return `<div class="wf-panel" id="wfp-${tag.replace(/[\/\s]/g,'-')}" style="display:${idx===0?'block':'none'}">
+      ${idx===0?legendHtml:''}
+      <div class="pipeline">${nodesHtml}</div>
+      <div class="mvp-box">
+        <div class="mvp-label">▶ 快速上手路径 — MVP 最小试验</div>
+        <ul class="mvp-steps">${mvpHtml}</ul>
+        <div class="mvp-time-total">⚡ 预估总耗时：${wf.eta}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="wf-section">
+    <div class="wf-header">
+      <div style="font-size:20px">⚙️</div>
+      <div><div class="wf-title">工程实现工作流</div><div class="wf-subtitle">// Pipeline · 推荐工具栈 · 快速上手路径</div></div>
+    </div>
+    ${tabsHtml}${panelsHtml}
+  </div>`;
+}
+
+function switchWFTab(btn,panelId){
+  const sec=btn.closest('.wf-section');
+  sec.querySelectorAll('.wf-tab-btn').forEach(b=>b.classList.remove('active'));
+  sec.querySelectorAll('.wf-panel').forEach(p=>p.style.display='none');
+  btn.classList.add('active');
+  sec.querySelector('#'+panelId).style.display='block';
+}
+
+// ══════════════════════════════════════════
+// DETAIL MODAL
+// ══════════════════════════════════════════
+function openDetail(id){
+  const e=entries.find(x=>x.id===id);if(!e)return;
+  const voted=votes.includes(id);
+  const ds=`background:${DIFF_COLOR[e.diff]}22;color:${DIFF_COLOR[e.diff]};border:1px solid ${DIFF_COLOR[e.diff]}55`;
+  let prev='';
+  if(e.type==='image'&&e.fileData)prev=`<img src="${e.fileData}" alt="${e.title}">`;
+  else if(e.type==='video'&&e.fileData)prev=`<video controls><source src="${e.fileData}"></video>`;
+  else if(e.thumb)prev=`<img src="${e.thumb}" style="object-fit:contain" onerror="this.style.display='none'">`;
+  else prev=`<div style="height:160px;display:flex;align-items:center;justify-content:center;font-size:48px;color:var(--text-dim)">🔗</div>`;
+  const tgs=e.tags.map(t=>`<span class="card-tag ${TAG_CATS[t]||''}" style="font-size:12px;padding:4px 10px">${t}</span>`).join('');
+  document.getElementById('detailModal').innerHTML=`
+    <div class="detail-preview">${prev}</div>
+    <div class="detail-body">
+      <div class="detail-header">
+        <div class="detail-title">${e.title}</div>
+        <button class="detail-close" onclick="closeDetail()">✕</button>
+      </div>
+      <div class="detail-meta">
+        <span class="meta-item">📍 ${e.platform}</span>
+        <span class="meta-item">🕐 ${timeAgo(e.id)}</span>
+        <span class="diff-pill" style="${ds}">落地难度 ${e.diff} — ${DIFF_LABEL[e.diff]}</span>
+      </div>
+      ${tgs?`<div class="card-tags" style="margin-bottom:14px">${tgs}</div>`:''}
+      ${e.note?`<div class="detail-desc">${e.note}</div>`:''}
+      ${e.url?`<a class="detail-link" href="${e.url}" target="_blank">↗ ${e.url}</a>`:''}
+      ${buildWF(e.tags)}
+      <div class="detail-footer">
+        <button class="vote-big ${voted?'voted':''}" id="dvb" onclick="handleDetailVote(${id})">↑ 投票支持 &nbsp;<span class="vc">${e.votes||0}</span></button>
+        ${e.url?`<a href="${e.url}" target="_blank" class="detail-link" style="margin-bottom:0">原始链接 ↗</a>`:''}
+      </div>
+    </div>`;
+  document.getElementById('detailOverlay').classList.add('open');
+}
+function handleDetailVote(id){
+  toggleVote(id,null);
+  const e=entries.find(x=>x.id===id),btn=document.getElementById('dvb');
+  if(btn&&e){btn.classList.toggle('voted',votes.includes(id));btn.querySelector('.vc').textContent=e.votes;}
+  render();
+}
+function closeDetail(){document.getElementById('detailOverlay').classList.remove('open');}
+document.getElementById('detailOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('detailOverlay'))closeDetail();});
+
+// ══════════════════════════════════════════
+// ADD MODAL
+// ══════════════════════════════════════════
+function openAddModal(){resetForm();document.getElementById('addOverlay').classList.add('open');}
+function closeAddModal(){document.getElementById('addOverlay').classList.remove('open');}
+document.getElementById('addOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('addOverlay'))closeAddModal();});
+function switchType(t){currentType=t;currentFileData=null;document.querySelectorAll('.type-tab').forEach(b=>b.classList.toggle('active',b.dataset.type===t));document.getElementById('urlGroup').style.display=t==='link'?'':'none';document.getElementById('uploadArea').classList.toggle('active',t!=='link');document.getElementById('uploadArea').querySelector('p').textContent='📁 点击选择文件';}
+function triggerUpload(){document.getElementById('fileInput').click();}
+function handleFile(input){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{currentFileData={dataUrl:ev.target.result,mimeType:f.type};document.getElementById('uploadArea').querySelector('p').textContent='✓ '+f.name;if(!document.getElementById('titleInput').value)document.getElementById('titleInput').value=f.name.replace(/\.[^.]+$/,'');};r.readAsDataURL(f);}
+function toggleTag(btn){btn.classList.toggle('sel');}
+function selectDiff(el){document.querySelectorAll('.diff-opt').forEach(d=>d.classList.remove('sel'));el.classList.add('sel');selectedDiff=parseInt(el.dataset.d);}
+
+// ── AI ANALYZE ───────────────────────────
+async function analyzeUrl(){
+  const url=document.getElementById('urlInput').value.trim();
+  if(!url){shake(document.getElementById('urlInput'));return;}
+  try{new URL(url);}catch(e){shake(document.getElementById('urlInput'));return;}
+
+  const btn=document.getElementById('analyzeBtn');
+  btn.disabled=true;btn.textContent='分析中...';btn.style.opacity='.5';
+
+  const panel=document.getElementById('aiResultPanel');
+  const statusText=document.getElementById('aiStatusText');
+  const editHint=document.getElementById('aiEditHint');
+  const resultBody=document.getElementById('aiResultBody');
+  panel.style.display='block';
+  statusText.textContent='✦ AI 正在分析...';
+  editHint.style.display='none';
+  resultBody.innerHTML=`<div style="display:flex;gap:6px;align-items:center;color:var(--text-muted);font-family:var(--font-mono);font-size:12px">
+    <span class="dot-pulse">●</span><span class="dot-pulse" style="animation-delay:.2s">●</span><span class="dot-pulse" style="animation-delay:.4s">●</span>
+    <span style="margin-left:4px">正在读取 ${url.replace(/https?:\/\//,'')} ...</span>
+  </div>`;
+
+  const ALL_TAGS=['AI生成','风格迁移','肢体识别','面部识别','手势识别','背景替换','粒子特效','光影特效','AR叠加','3D追踪','镜头运镜','音频驱动','互动玩法','合拍/分屏'];
+
+  const prompt=`你是一名专业的短视频特效产品经理，专门分析海外视觉特效产品。
+
+我需要你分析这个URL对应的产品/功能：${url}
+
+请根据URL的域名、路径和你对这个产品的了解，判断它是什么特效或视觉玩法，然后严格按照以下JSON格式输出，不要输出任何其他内容：
+
+{
+  "title": "用15字以内的中文描述这个特效玩法的核心功能，要具体有料",
+  "note": "用2-3句话描述这个玩法的亮点、用户体验特点、以及对我们团队的参考价值",
+  "platform": "从以下选项中选一个最匹配的：TikTok/Instagram/YouTube/Snapchat/BeReal/其他",
+  "tags": ["从以下列表中选1-3个最匹配的技术标签：${ALL_TAGS.join('/')}"],
+  "difficulty": 一个1-5的整数（1=简单/纯前端可做，2=较易/需少量模型，3=中等/需多模型协作，4=复杂/需实时推理优化，5=极难/业界顶尖才能做好）,
+  "difficultyReason": "用一句话解释难度评分的原因，要具体说明技术瓶颈在哪"
+}
+
+注意：
+- title要让人一眼知道这是什么特效，避免模糊词如"功能"、"工具"
+- tags只选真正涉及的技术，不要凑数
+- difficulty要客观，参考实现这个特效需要的模型复杂度和实时性要求`;
+
+  try{
+    // 调用后端代理 /api/analyze，避免在前端暴露 GEMINI_API_KEY
+    const resp=await fetch('/api/analyze',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({url})
+    });
+    const data=await resp.json();
+    if(!resp.ok)throw new Error(data.error||'AI分析失败');
+    const result=data;
+
+    // Apply results to form
+    document.getElementById('titleInput').value=result.title||'';
+    document.getElementById('titleAiBadge').style.display='inline';
+    document.getElementById('noteInput').value=result.note||'';
+    document.getElementById('noteAiBadge').style.display='inline';
+
+    // Set platform
+    const platSel=document.getElementById('platformInput');
+    const platOpts=['TikTok','Instagram','YouTube','Snapchat','BeReal','其他'];
+    const matchedPlat=platOpts.find(p=>result.platform&&result.platform.includes(p))||'其他';
+    platSel.value=matchedPlat;
+
+    // Set tags
+    document.querySelectorAll('#tagSelectGrid .tag-select-btn').forEach(b=>b.classList.remove('sel'));
+    (result.tags||[]).forEach(t=>{
+      const btn=document.querySelector(`#tagSelectGrid .tag-select-btn[data-t="${t}"]`);
+      if(btn)btn.classList.add('sel');
+    });
+    document.getElementById('tagAiBadge').style.display='inline';
+
+    // Set difficulty
+    const d=Math.min(5,Math.max(1,parseInt(result.difficulty)||3));
+    document.querySelectorAll('.diff-opt').forEach(el=>el.classList.toggle('sel',parseInt(el.dataset.d)===d));
+    selectedDiff=d;
+    document.getElementById('diffAiBadge').style.display='inline';
+    if(result.difficultyReason){
+      const dr=document.getElementById('diffReason');
+      dr.textContent='💡 '+result.difficultyReason;
+      dr.style.display='block';
+    }
+
+    // Show success in panel
+    const tagNames=(result.tags||[]).join(' · ');
+    resultBody.innerHTML=`<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);line-height:1.8">
+      <div style="color:var(--accent);margin-bottom:6px">✓ 分析完成 — 所有字段已自动填写，可直接存入或修改</div>
+      <div>标题：<span style="color:var(--text)">${result.title}</span></div>
+      <div>标签：<span style="color:var(--accent3)">${tagNames||'无'}</span></div>
+      <div>难度：<span style="color:${DIFF_COLOR[d]}">${d} — ${DIFF_LABEL[d]}</span></div>
+    </div>`;
+    statusText.textContent='✦ AI 分析完成';
+    editHint.style.display='block';
+
+  }catch(err){
+    resultBody.innerHTML=`<div style="font-family:var(--font-mono);font-size:11px;color:var(--accent2)">⚠ ${err.message||'分析失败，请检查网络后重试'}</div>`;
+    statusText.textContent='✦ 分析遇到问题';
+  }finally{
+    btn.disabled=false;btn.textContent='✦ 重新分析';btn.style.opacity='1';
+  }
+}
+
+async function submitEntry(){
+  const title=document.getElementById('titleInput').value.trim();
+  const url=document.getElementById('urlInput').value.trim();
+  const note=document.getElementById('noteInput').value.trim();
+  const platform=document.getElementById('platformInput').value;
+  if(!title){shake(document.getElementById('titleInput'));return;}
+  if(currentType==='link'&&!url){shake(document.getElementById('urlInput'));return;}
+  if(currentType!=='link'&&!currentFileData){shake(document.getElementById('uploadArea'));return;}
+  const tags=[...document.querySelectorAll('#tagSelectGrid .tag-select-btn.sel')].map(b=>b.dataset.t);
+  let thumb='';if(currentType==='link'){try{const u=new URL(url);thumb=`https://www.google.com/s2/favicons?sz=128&domain=${u.hostname}`;}catch(e){}}
+
+  // 生成 UUID 作为主键（Supabase uuid 类型）
+  const id=crypto.randomUUID();
+  // fileData（base64）只存本地，不上传服务器（体积过大）
+  const fileDataLocal=currentFileData?currentFileData.dataUrl:null;
+  const newEntry={id,type:currentType,title,url:currentType==='link'?url:'',fileData:fileDataLocal,note,platform,tags,diff:selectedDiff,votes:0,thumb};
+
+  // 先乐观更新 UI
+  entries.unshift(newEntry);
+  save();closeAddModal();render();
+
+  // 异步同步到云端（不阻塞用户操作）
+  try{
+    const resp=await fetch('/api/entries',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({...newEntry,fileData:null})// 不发 base64
+    });
+    if(!resp.ok){const err=await resp.json();console.warn('[SPARK] 同步失败:',err.error);}
+  }catch(e){
+    console.warn('[SPARK] 网络错误，已保存到本地:',e.message);
+  }
+}
+function shake(el){el.style.borderColor='var(--accent2)';setTimeout(()=>el.style.borderColor='',1000);}
+function resetForm(){
+  currentType='link';currentFileData=null;selectedDiff=3;
+  document.getElementById('urlInput').value='';
+  document.getElementById('titleInput').value='';
+  document.getElementById('noteInput').value='';
+  document.getElementById('platformInput').value='TikTok';
+  document.getElementById('aiResultPanel').style.display='none';
+  document.getElementById('analyzeBtn').textContent='✦ AI 分析';
+  document.getElementById('analyzeBtn').disabled=false;
+  document.getElementById('analyzeBtn').style.opacity='1';
+  ['titleAiBadge','noteAiBadge','tagAiBadge','diffAiBadge'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('diffReason').style.display='none';
+  document.querySelectorAll('.type-tab').forEach(b=>b.classList.toggle('active',b.dataset.type==='link'));
+  document.getElementById('urlGroup').style.display='';
+  document.getElementById('uploadArea').classList.remove('active');
+  document.getElementById('fileInput').value='';
+  document.getElementById('uploadArea').querySelector('p').textContent='📁 点击选择文件';
+  document.querySelectorAll('#tagSelectGrid .tag-select-btn').forEach(b=>b.classList.remove('sel'));
+  document.querySelectorAll('.diff-opt').forEach(d=>d.classList.toggle('sel',d.dataset.d==='3'));
+}
+
+// SEED
+function seedIfEmpty(){
+  if(entries.length)return;
+  [{type:'link',title:'TikTok 面部融合特效 — 双人脸实时合并',url:'https://www.tiktok.com',platform:'TikTok',tags:['面部识别','AI生成'],diff:4,note:'用户同框时触发，融合过渡丝滑，适合合拍场景改版。',votes:12},
+   {type:'link',title:'Instagram 重力粒子追踪器 — 手腕随动',url:'https://www.instagram.com',platform:'Instagram',tags:['肢体识别','粒子特效'],diff:3,note:'手腕追踪带出粒子轨迹，物理模拟质感强。',votes:8},
+   {type:'link',title:'Snapchat AR 换装 — 实时服饰替换',url:'https://www.snapchat.com',platform:'Snapchat',tags:['背景替换','AR叠加','肢体识别'],diff:5,note:'3D Cloth simulation + 全身识别，接近商用试穿间。',votes:21},
+   {type:'link',title:'BeReal 风格色调克隆器',url:'https://bere.al',platform:'BeReal',tags:['风格迁移','AI生成'],diff:2,note:'一键提取目标视频色调并实时应用到摄像头。',votes:5},
+   {type:'link',title:'YouTube — 音波可视化歌词墙',url:'https://www.youtube.com',platform:'YouTube',tags:['音频驱动','互动玩法'],diff:3,note:'歌词随节拍弹出消散，字体粗细随振幅变化。',votes:16},
+   {type:'link',title:'分屏合拍 — 镜像运动同步挑战',url:'https://www.tiktok.com',platform:'TikTok',tags:['合拍/分屏','肢体识别'],diff:2,note:'实时检测骨骼关键点，动作偏差高亮提示。',votes:19},
+  ].forEach((s,i)=>entries.push({id:Date.now()-(6-i)*100000,fileData:null,thumb:'',...s}));
+  save();
+}
+
+// 优先从云端加载；若在本地静态打开则 fallback 到 localStorage + seed
+if(location.protocol==='file:'){
+  // 直接打开 HTML 文件时，API 不可用，用本地数据
+  entries=JSON.parse(localStorage.getItem('spark_entries')||'[]');
+  seedIfEmpty();render();
+}else{
+  // 部署到服务器时，从云端加载数据
+  loadFromCloud().then(()=>{ if(!entries.length){seedIfEmpty();render();} });
+}
+</script>
+</body>
+</html>
